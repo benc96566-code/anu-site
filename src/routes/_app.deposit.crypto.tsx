@@ -18,10 +18,10 @@ export const Route = createFileRoute("/_app/deposit/crypto")({
 });
 
 const NETWORKS = [
-  { id: "BTC", coin: "BTC", label: "Bitcoin (BTC)", min: 0.0001, fee: 0.00005, arrival: "2–3 confirmations", address: "bc1qv7ty9d9m43sjm55vy3jgcv8w2eh026qvlx4afr", qr: qrBtc, tag: "Native SegWit" },
-  { id: "ETH", coin: "ETH", label: "Ethereum (ETH)", min: 0.005, fee: 0.0005, arrival: "12 confirmations", address: "0xc6A1B3dA4638856E25D27d77e547C87b6Fcf2EC1", qr: qrEth, tag: "ERC-20" },
-  { id: "DOGE", coin: "DOGE", label: "Dogecoin (DOGE)", min: 5, fee: 1, arrival: "6 confirmations", address: "DG68dbR7Si1qswRk3ovbEbh9zqW1YpXW1V", qr: qrDoge, tag: "Dogecoin" },
-  { id: "SOL", coin: "SOL", label: "Solana (SOL)", min: 0.05, fee: 0.00001, arrival: "1 confirmation", address: "Eq7RWQ2n9Q96ieCBuyaFZuJ6i8WVZf8PabpJuS8N1i1K", qr: qrSol, tag: "Default" },
+  { id: "BTC", coin: "BTC", label: "Bitcoin (BTC)", min: 0.0001, fee: 0.00005, arrival: "2–3 confirmations", address: "bc1qk58a6nx09kn6vzmajfvk5d037rga8dg33930gt", qr: qrBtc, tag: "Native SegWit" },
+  { id: "ETH", coin: "ETH", label: "Ethereum (ETH)", min: 0.005, fee: 0.0005, arrival: "12 confirmations", address: "0xC53c15fcbA4C7D20A61F0db2894dB61cAc27827b", qr: qrEth, tag: "ERC-20" },
+  { id: "DOGE", coin: "DOGE", label: "Dogecoin (DOGE)", min: 5, fee: 1, arrival: "6 confirmations", address: "D96zgaCddqWqQ5AgfnKeNhe8DrbuDzP1mx", qr: qrDoge, tag: "Dogecoin" },
+  { id: "SOL", coin: "SOL", label: "Solana (SOL)", min: 0.05, fee: 0.00001, arrival: "1 confirmation", address: "2tDxDut3RRKmBNUASXa48Hn5UDTjzQDpCAm8PWjnQZ9g", qr: qrSol, tag: "Default" },
   { id: "XRP", coin: "XRP", label: "XRP (Ripple)", min: 1, fee: 0.00002, arrival: "1 confirmation", address: "rnVspxmTh9BVp6tBT8Yom5YSF4Cd48Cdkp", qr: qrXrp, tag: "XRP Ledger" },
 ];
 
