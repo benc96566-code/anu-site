@@ -31,7 +31,26 @@ function Login() {
       } catch {}
     }
     setBusy(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      if ((error as { code?: string }).code === "email_not_confirmed" || /not confirmed/i.test(error.message)) {
+        toast.error("Email not confirmed", {
+          description: "Check your inbox for the confirmation link.",
+          action: {
+            label: "Resend",
+            onClick: async () => {
+              const { error: e2 } = await supabase.auth.resend({
+                type: "signup",
+                email,
+                options: { emailRedirectTo: `${window.location.origin}/` },
+              });
+              toast[e2 ? "error" : "success"](e2 ? e2.message : "Confirmation email sent");
+            },
+          },
+        });
+        return;
+      }
+      return toast.error(error.message);
+    }
     toast.success("Welcome back");
     nav({ to: "/dashboard", replace: true });
   };
