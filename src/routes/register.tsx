@@ -31,14 +31,17 @@ function Register() {
         data: { first_name: firstName, last_name: lastName, referral_code: referral || null },
       },
     });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    if (!data.session) {
-      toast.success("Check your email to confirm your account, then log in.");
-      return nav({ to: "/login", replace: true });
+    if (error) {
+      setBusy(false);
+      return toast.error(error.message);
     }
-    toast.success("Account created. Welcome!");
-    nav({ to: "/dashboard", replace: true });
+    // Always land on the sign-in page after creating an account.
+    if (data.session) await supabase.auth.signOut();
+    setBusy(false);
+    toast.success("Account created", {
+      description: "Sign in with your email and password to continue.",
+    });
+    nav({ to: "/login", replace: true });
   };
 
   return (
