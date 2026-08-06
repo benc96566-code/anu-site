@@ -23,7 +23,7 @@ function Register() {
     e.preventDefault();
     if (!agree) return toast.error("Please accept the Terms of Service.");
     setBusy(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -33,6 +33,10 @@ function Register() {
     });
     setBusy(false);
     if (error) return toast.error(error.message);
+    if (!data.session) {
+      toast.success("Check your email to confirm your account, then log in.");
+      return nav({ to: "/login", replace: true });
+    }
     toast.success("Account created. Welcome!");
     nav({ to: "/dashboard", replace: true });
   };
