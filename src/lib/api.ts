@@ -6,6 +6,7 @@ export type Account = {
   user_id: string;
   balance: number;
   buying_power: number;
+  bonus_balance: number;
 };
 
 export type Transaction = {
@@ -55,6 +56,7 @@ export function useAccount() {
         ...(data as any),
         balance: Number((data as any).balance),
         buying_power: Number((data as any).buying_power),
+        bonus_balance: Number((data as any).bonus_balance ?? 0),
       };
     },
   });
@@ -126,6 +128,8 @@ export type Profile = {
   phone: string | null;
   address: string | null;
   country: string | null;
+  referral_code: string | null;
+  referred_by: string | null;
 };
 
 export function useProfile() {
@@ -223,4 +227,34 @@ export function useDeletePaymentMethod() {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["payment_methods"] }),
   });
+}
+
+/* ---------------- Referral program ---------------- */
+
+export const REFERRAL_BONUS = 100;
+export const BONUS_UNLOCK_DEPOSIT = 1000;
+
+/** Claims a referral code once for the signed-in user ($100 to both sides). */
+export function useClaimReferral() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (code: string) => {
+      const { data, error } = await supabase.rpc("apply_referral" as any, { _code: code });
+      if (error) throw error;
+      return data as { ok: boolean; reason?: string };
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["account"] });
+      qc.invalidateQueries({ queryKey: ["profile"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+/** Total confirmed deposits — bonus funds unlock at $1,000. */
+export function useDepositTotal() {
+  const { data: txs = [] } = useTransactions();
+  return txs
+    .filter((t) => t.kind === "deposit" && t.amount > 0 && (t as any).status !== "rejected")
+    .reduce((sum, t) => sum + t.amount, 0);
 }

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
 import { BottomNav } from "@/components/BottomNav";
 import { WalletProvider } from "@/components/wallet/WalletProvider";
+import { ReferralClaimer } from "@/components/ReferralClaimer";
 
 export const Route = createFileRoute("/_app")({
   ssr: false,
@@ -28,6 +29,7 @@ function AppLayout() {
   return (
     <WalletProvider>
       <div className="min-h-screen bg-background pb-28">
+        <ReferralClaimer />
         <Outlet />
         <BottomNav />
       </div>
