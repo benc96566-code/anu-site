@@ -17,6 +17,7 @@ export type Database = {
       accounts: {
         Row: {
           balance: number
+          bonus_balance: number
           buying_power: number
           created_at: string
           updated_at: string
@@ -24,6 +25,7 @@ export type Database = {
         }
         Insert: {
           balance?: number
+          bonus_balance?: number
           buying_power?: number
           created_at?: string
           updated_at?: string
@@ -31,6 +33,7 @@ export type Database = {
         }
         Update: {
           balance?: number
+          bonus_balance?: number
           buying_power?: number
           created_at?: string
           updated_at?: string
@@ -205,6 +208,8 @@ export type Database = {
           first_name: string | null
           last_name: string | null
           phone: string | null
+          referral_code: string | null
+          referred_by: string | null
           updated_at: string
           user_id: string
         }
@@ -215,6 +220,8 @@ export type Database = {
           first_name?: string | null
           last_name?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string
           user_id: string
         }
@@ -225,6 +232,8 @@ export type Database = {
           first_name?: string | null
           last_name?: string | null
           phone?: string | null
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -295,6 +304,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_referral: { Args: { _code: string }; Returns: Json }
+      generate_referral_code: { Args: never; Returns: string }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
