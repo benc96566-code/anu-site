@@ -1,9 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Lock, Gift } from "lucide-react";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
-import { useAccount, useDeposit, usePaymentMethods } from "@/lib/api";
+import { useAccount, useDeposit, usePaymentMethods, useDepositTotal, BONUS_UNLOCK_DEPOSIT } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/withdraw")({
   component: Withdraw,
@@ -20,10 +20,23 @@ function Withdraw() {
   const bank = banks.find((b) => b.id === bankId) ?? banks[0];
   const deposit = useDeposit();
 
+  const depositTotal = useDepositTotal();
+  const bonus = account?.bonus_balance ?? 0;
+  const bonusUnlocked = depositTotal >= BONUS_UNLOCK_DEPOSIT;
+  const cash = account?.balance ?? 0;
+  const withdrawable = cash + (bonusUnlocked ? bonus : 0);
+
   const submit = async () => {
     if (value < 10) return toast.error("Minimum withdrawal is $10");
     if (!bank) return toast.error("Link a bank account first");
-    if (account && value > account.balance) return toast.error("Insufficient balance");
+    if (value > withdrawable) {
+      if (bonus > 0 && !bonusUnlocked && value <= cash + bonus) {
+        return toast.error("Referral bonus is locked", {
+          description: `Deposit a total of $${BONUS_UNLOCK_DEPOSIT.toLocaleString()} or more to unlock your $${bonus.toFixed(2)} bonus for withdrawal.`,
+        });
+      }
+      return toast.error("Insufficient balance");
+    }
     await deposit.mutateAsync({ amount: -value, kind: "withdrawal", label: `Withdraw to ${bank.label}`, sub: `••${bank.last4}` });
     toast.success("Withdrawal request submitted for review");
     nav({ to: "/dashboard" });
@@ -39,7 +52,7 @@ function Withdraw() {
       </div>
 
       <div className="mt-8 text-center">
-        <div className="text-xs font-medium text-muted-foreground">Available {money(account?.balance ?? 0)}</div>
+        <div className="text-xs font-medium text-muted-foreground">Available {money(withdrawable)}</div>
         <div className="mt-2 flex items-center justify-center gap-1">
           <span className="text-4xl font-extrabold">$</span>
           <input
@@ -50,6 +63,22 @@ function Withdraw() {
           />
         </div>
       </div>
+
+      {bonus > 0 && (
+        <div className={`mt-6 flex items-start gap-3 rounded-2xl border p-4 text-sm ${bonusUnlocked ? "border-emerald-500/40 bg-emerald-500/10" : "border-amber-500/40 bg-amber-500/10"}`}>
+          {bonusUnlocked ? <Gift className="mt-0.5 h-4 w-4 text-emerald-600" /> : <Lock className="mt-0.5 h-4 w-4 text-amber-600" />}
+          <div className="text-xs">
+            <div className="font-semibold">
+              Referral bonus {money(bonus)} — {bonusUnlocked ? "unlocked" : "locked"}
+            </div>
+            <div className="mt-0.5 text-muted-foreground">
+              {bonusUnlocked
+                ? "Your bonus is included in the available balance above."
+                : `Referral bonus funds can only be withdrawn once your deposits total ${money(BONUS_UNLOCK_DEPOSIT)} or more. You have deposited ${money(depositTotal)} so far — ${money(Math.max(0, BONUS_UNLOCK_DEPOSIT - depositTotal))} to go.`}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="card-elevated mt-6 p-4">
         <div className="text-xs font-medium text-muted-foreground">To</div>
