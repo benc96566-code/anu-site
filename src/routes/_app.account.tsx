@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ArrowLeft, BadgeCheck, Save } from "lucide-react";
+import { ArrowLeft, BadgeCheck, Save, Gift, Copy } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { useProfile, useUpdateProfile } from "@/lib/api";
+import { useProfile, useUpdateProfile, useAccount, REFERRAL_BONUS, BONUS_UNLOCK_DEPOSIT } from "@/lib/api";
 import { COUNTRIES } from "@/lib/countries";
 import { toast } from "sonner";
 
@@ -14,6 +14,7 @@ function Account() {
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const update = useUpdateProfile();
+  const { data: account } = useAccount();
   const [form, setForm] = useState({ first_name: "", last_name: "", phone: "", address: "", country: "" });
 
   useEffect(() => {
@@ -47,6 +48,38 @@ function Account() {
           <div className="text-xs text-muted-foreground">{user?.email}</div>
         </div>
       </div>
+
+      {profile?.referral_code && (
+        <div className="card-elevated mt-4 p-4">
+          <div className="flex items-center gap-2">
+            <Gift className="h-5 w-5 text-primary" />
+            <div className="font-semibold">Your referral code</div>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <div className="flex-1 rounded-xl border border-dashed border-primary/50 bg-primary/5 px-3 py-2.5 text-center font-mono text-lg font-extrabold tracking-widest">
+              {profile.referral_code}
+            </div>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(profile.referral_code!);
+                toast.success("Referral code copied");
+              }}
+              className="grid h-11 w-11 place-items-center rounded-xl bg-surface hover:bg-muted"
+              aria-label="Copy referral code"
+            >
+              <Copy className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="mt-3 text-xs text-muted-foreground">
+            Friends who sign up with your code get ${REFERRAL_BONUS} instantly, and you get ${REFERRAL_BONUS} too.
+            Bonus funds become withdrawable once deposits total ${BONUS_UNLOCK_DEPOSIT.toLocaleString()} or more.
+          </p>
+          <div className="mt-3 flex items-center justify-between rounded-xl bg-surface px-3 py-2 text-sm">
+            <span className="text-muted-foreground">Bonus balance</span>
+            <span className="font-semibold">${(account?.bonus_balance ?? 0).toFixed(2)}</span>
+          </div>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="p-8 text-center text-sm text-muted-foreground">Loading…</div>
