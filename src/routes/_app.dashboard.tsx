@@ -72,6 +72,11 @@ function Dashboard() {
         <div className={`mt-1 text-sm font-semibold ${todayChange >= 0 ? "text-primary" : "text-destructive"}`}>
           {todayChange >= 0 ? "▲" : "▼"} {money(Math.abs(todayChange))} ({pct(todayPct)}) Today
         </div>
+        {bonus > 0 && (
+          <div className="mt-1 text-xs text-muted-foreground">
+            Includes {money(bonus)} referral bonus
+          </div>
+        )}
       </div>
 
       <div className="mt-6">
