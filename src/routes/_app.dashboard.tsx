@@ -23,6 +23,7 @@ function Dashboard() {
   const { assets, map } = useAllQuotes();
 
   const cash = Number(account?.balance ?? 0);
+  const bonus = Number(account?.bonus_balance ?? 0);
   const buyingPower = Number(account?.buying_power ?? 0);
 
   const investedValue = useMemo(() => {
