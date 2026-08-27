@@ -268,3 +268,38 @@ export const isCurrentUserAdmin = createServerFn({ method: "GET" })
     if (error) return false;
     return !!data?.length;
   });
+
+const noticeSchema = z.object({
+  user_ids: z.array(z.string().uuid()).min(1).max(500),
+  title: z.string().trim().min(1).max(120),
+  body: z.string().trim().max(1000).optional(),
+});
+
+/** Admin-only: send a notice that appears in the recipient's notifications. */
+export const adminSendNotice = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => noticeSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: callerRoles, error: roleError } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin")
+      .limit(1);
+    if (roleError) throw new Error(roleError.message);
+    const { data: caller, error: callerError } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    if (callerError) throw new Error(callerError.message);
+    const callerEmail = caller.user?.email?.toLowerCase() ?? "";
+    const adminEmail = (process.env.ADMIN_EMAIL ?? "clientm2@gmail.com").toLowerCase();
+    if (callerEmail !== adminEmail && !(callerRoles ?? []).length) throw new Error("Forbidden");
+
+    const rows = data.user_ids.map((id) => ({
+      user_id: id,
+      title: data.title,
+      body: data.body || null,
+    }));
+    const { error } = await supabaseAdmin.from("notifications").insert(rows);
+    if (error) throw new Error(error.message);
+    return { ok: true, sent: rows.length };
+  });
