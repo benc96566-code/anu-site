@@ -3,13 +3,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, ShieldCheck, Check, X } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Check, X, Send } from "lucide-react";
 import { money } from "@/lib/format";
 import {
   adminListUsers,
   adminListPending,
   adminDecideTransaction,
   adminAdjustBalance,
+  adminSendNotice,
   isCurrentUserAdmin,
 } from "@/lib/admin.functions";
 
@@ -24,6 +25,7 @@ function AdminPage() {
   const listPending = useServerFn(adminListPending);
   const decide = useServerFn(adminDecideTransaction);
   const adjust = useServerFn(adminAdjustBalance);
+  const sendNotice = useServerFn(adminSendNotice);
   const qc = useQueryClient();
 
   const isAdmin = useQuery({ queryKey: ["is-admin"], queryFn: () => check() });
@@ -59,6 +61,12 @@ function AdminPage() {
     },
     onError: (e: any) => toast.error(e?.message ?? "Failed"),
   });
+  const noticeMut = useMutation({
+    mutationFn: (v: { user_ids: string[]; title: string; body?: string }) => sendNotice({ data: v }),
+    onSuccess: (r: any) => toast.success(`Notice sent to ${r?.sent ?? 0} account(s)`),
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+
 
   if (isAdmin.isLoading) return <div className="p-10 text-center text-sm">Checking access…</div>;
   if (!isAdmin.data) return null;
@@ -109,6 +117,12 @@ function AdminPage() {
           ))}
         </ul>
       </section>
+
+      <NoticeComposer
+        users={users.data ?? []}
+        pending={noticeMut.isPending}
+        onSend={(v) => noticeMut.mutate(v)}
+      />
 
       <section className="mt-8">
         <h2 className="text-lg font-bold">Users & balances</h2>
@@ -185,5 +199,74 @@ function UserRow({
         </button>
       </div>
     </li>
+  );
+}
+
+function NoticeComposer({
+  users,
+  onSend,
+  pending,
+}: {
+  users: { user_id: string; email: string | null; first_name: string | null; last_name: string | null }[];
+  onSend: (v: { user_ids: string[]; title: string; body?: string }) => void;
+  pending: boolean;
+}) {
+  const [target, setTarget] = useState<string>("");
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+
+  const send = () => {
+    if (!title.trim()) return toast.error("Add a title");
+    const ids = target === "__all__" ? users.map((u) => u.user_id) : target ? [target] : [];
+    if (!ids.length) return toast.error("Pick a recipient");
+    onSend({ user_ids: ids, title: title.trim(), body: body.trim() || undefined });
+    setTitle("");
+    setBody("");
+  };
+
+  return (
+    <section className="mt-8">
+      <h2 className="flex items-center gap-2 text-lg font-bold">
+        <Send className="h-4 w-4 text-primary" /> Send notice
+      </h2>
+      <p className="text-xs text-muted-foreground">Delivered to the account's notifications.</p>
+      <div className="card-elevated mt-3 space-y-2 p-3">
+        <select
+          value={target}
+          onChange={(e) => setTarget(e.target.value)}
+          className="h-10 w-full rounded-lg border border-input bg-surface px-2 text-sm outline-none focus:border-primary"
+        >
+          <option value="">Select recipient…</option>
+          <option value="__all__">All users ({users.length})</option>
+          {users.map((u) => (
+            <option key={u.user_id} value={u.user_id}>
+              {u.email ?? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim() ?? u.user_id.slice(0, 8)}
+            </option>
+          ))}
+        </select>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Title"
+          maxLength={120}
+          className="h-10 w-full rounded-lg border border-input bg-surface px-2 text-sm outline-none focus:border-primary"
+        />
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Message (optional)"
+          rows={3}
+          maxLength={1000}
+          className="w-full rounded-lg border border-input bg-surface p-2 text-sm outline-none focus:border-primary"
+        />
+        <button
+          onClick={send}
+          disabled={pending}
+          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-sm font-semibold text-primary-foreground disabled:opacity-40"
+        >
+          <Send className="h-4 w-4" /> {pending ? "Sending…" : "Send notice"}
+        </button>
+      </div>
+    </section>
   );
 }
