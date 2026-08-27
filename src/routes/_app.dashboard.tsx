@@ -30,7 +30,7 @@ function Dashboard() {
     if (!holdings) return 0;
     return holdings.reduce((s, h) => s + h.quantity * (map[h.symbol]?.price ?? 0), 0);
   }, [holdings, map]);
-  const portfolioTotal = cash + investedValue;
+  const portfolioTotal = cash + bonus + investedValue;
 
   // Today's change: intraday market movement on held positions only.
   // Buys/sells/deposits move cash <-> invested but don't change net worth,
