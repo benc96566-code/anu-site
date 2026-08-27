@@ -61,6 +61,12 @@ function AdminPage() {
     },
     onError: (e: any) => toast.error(e?.message ?? "Failed"),
   });
+  const noticeMut = useMutation({
+    mutationFn: (v: { user_ids: string[]; title: string; body?: string }) => sendNotice({ data: v }),
+    onSuccess: (r: any) => toast.success(`Notice sent to ${r?.sent ?? 0} account(s)`),
+    onError: (e: any) => toast.error(e?.message ?? "Failed"),
+  });
+
 
   if (isAdmin.isLoading) return <div className="p-10 text-center text-sm">Checking access…</div>;
   if (!isAdmin.data) return null;
