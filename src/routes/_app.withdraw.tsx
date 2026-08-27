@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { ArrowLeft, CheckCircle2, Lock, Gift } from "lucide-react";
 import { money } from "@/lib/format";
 import { toast } from "sonner";
-import { useAccount, useDeposit, usePaymentMethods, useDepositTotal, BONUS_UNLOCK_DEPOSIT } from "@/lib/api";
+import { useAccount, useDeposit, usePaymentMethods, useDepositTotal, useBonusUnlocked, BONUS_UNLOCK_DEPOSIT } from "@/lib/api";
 
 export const Route = createFileRoute("/_app/withdraw")({
   component: Withdraw,
@@ -22,7 +22,7 @@ function Withdraw() {
 
   const depositTotal = useDepositTotal();
   const bonus = account?.bonus_balance ?? 0;
-  const bonusUnlocked = depositTotal >= BONUS_UNLOCK_DEPOSIT;
+  const { data: bonusUnlocked = false } = useBonusUnlocked();
   const cash = account?.balance ?? 0;
   const withdrawable = cash + (bonusUnlocked ? bonus : 0);
 
@@ -32,7 +32,7 @@ function Withdraw() {
     if (value > withdrawable) {
       if (bonus > 0 && !bonusUnlocked && value <= cash + bonus) {
         return toast.error("Referral bonus is locked", {
-          description: `Deposit a total of $${BONUS_UNLOCK_DEPOSIT.toLocaleString()} or more to unlock your $${bonus.toFixed(2)} bonus for withdrawal.`,
+          description: `Your bonus of $${bonus.toFixed(2)} unlocks once the person you referred deposits $${BONUS_UNLOCK_DEPOSIT.toLocaleString()} or more.`,
         });
       }
       return toast.error("Insufficient balance");
@@ -74,7 +74,7 @@ function Withdraw() {
             <div className="mt-0.5 text-muted-foreground">
               {bonusUnlocked
                 ? "Your bonus is included in the available balance above."
-                : `Referral bonus funds can only be withdrawn once your deposits total ${money(BONUS_UNLOCK_DEPOSIT)} or more. You have deposited ${money(depositTotal)} so far — ${money(Math.max(0, BONUS_UNLOCK_DEPOSIT - depositTotal))} to go.`}
+                : `Referral bonus funds can only be withdrawn once the person you referred has deposited ${money(BONUS_UNLOCK_DEPOSIT)} or more. Your own deposits so far: ${money(depositTotal)}.`}
             </div>
           </div>
         </div>
