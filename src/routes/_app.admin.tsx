@@ -25,6 +25,7 @@ function AdminPage() {
   const listPending = useServerFn(adminListPending);
   const decide = useServerFn(adminDecideTransaction);
   const adjust = useServerFn(adminAdjustBalance);
+  const sendNotice = useServerFn(adminSendNotice);
   const qc = useQueryClient();
 
   const isAdmin = useQuery({ queryKey: ["is-admin"], queryFn: () => check() });
