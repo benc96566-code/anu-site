@@ -118,6 +118,12 @@ function AdminPage() {
         </ul>
       </section>
 
+      <NoticeComposer
+        users={users.data ?? []}
+        pending={noticeMut.isPending}
+        onSend={(v) => noticeMut.mutate(v)}
+      />
+
       <section className="mt-8">
         <h2 className="text-lg font-bold">Users & balances</h2>
         <p className="text-xs text-muted-foreground">Credit or debit any user's account.</p>
