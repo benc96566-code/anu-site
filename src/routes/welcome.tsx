@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import welcomeHero from "@/assets/welcome-hero.png.asset.json";
+import welcomeHero from "@/assets/rh-phone.png";
 
 export const Route = createFileRoute("/welcome")({
   component: Welcome,
@@ -32,9 +32,11 @@ function Welcome() {
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-10">
         <div className="flex w-full max-w-sm flex-1 flex-col items-center justify-center">
           <img
-            src={welcomeHero.url}
+            src={welcomeHero}
             alt="Robinhood app on a phone"
-            className="w-full max-w-[320px]"
+            width={320}
+            height={640}
+            className="h-auto w-full max-w-[240px] object-contain sm:max-w-[320px]"
           />
           <h1 className="mt-10 text-center text-3xl font-extrabold tracking-tight text-foreground">
             Welcome to Robinhood

@@ -23,13 +23,14 @@ function Dashboard() {
   const { assets, map } = useAllQuotes();
 
   const cash = Number(account?.balance ?? 0);
+  const bonus = Number(account?.bonus_balance ?? 0);
   const buyingPower = Number(account?.buying_power ?? 0);
 
   const investedValue = useMemo(() => {
     if (!holdings) return 0;
     return holdings.reduce((s, h) => s + h.quantity * (map[h.symbol]?.price ?? 0), 0);
   }, [holdings, map]);
-  const portfolioTotal = cash + investedValue;
+  const portfolioTotal = cash + bonus + investedValue;
 
   // Today's change: intraday market movement on held positions only.
   // Buys/sells/deposits move cash <-> invested but don't change net worth,
@@ -71,6 +72,11 @@ function Dashboard() {
         <div className={`mt-1 text-sm font-semibold ${todayChange >= 0 ? "text-primary" : "text-destructive"}`}>
           {todayChange >= 0 ? "▲" : "▼"} {money(Math.abs(todayChange))} ({pct(todayPct)}) Today
         </div>
+        {bonus > 0 && (
+          <div className="mt-1 text-xs text-muted-foreground">
+            Includes {money(bonus)} referral bonus
+          </div>
+        )}
       </div>
 
       <div className="mt-6">
