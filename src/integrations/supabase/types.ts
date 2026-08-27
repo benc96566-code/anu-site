@@ -313,6 +313,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      referral_bonus_unlocked: { Args: never; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"

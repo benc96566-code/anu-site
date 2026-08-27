@@ -258,3 +258,20 @@ export function useDepositTotal() {
     .filter((t) => t.kind === "deposit" && t.amount > 0 && (t as any).status !== "rejected")
     .reduce((sum, t) => sum + t.amount, 0);
 }
+
+/**
+ * Bonus unlocks once someone you referred has deposited $1,000+
+ * (or once you have deposited $1,000+ yourself).
+ */
+export function useBonusUnlocked() {
+  const { user } = useAuth();
+  return useQuery({
+    queryKey: ["bonus-unlocked", user?.id],
+    enabled: !!user,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc("referral_bonus_unlocked" as any);
+      if (error) throw error;
+      return Boolean(data);
+    },
+  });
+}
