@@ -72,19 +72,19 @@ export const Route = createFileRoute("/terms")({
           ],
         },
         {
-          heading: "6. Suspension and termination",
+          heading: "7. Suspension and termination",
           paragraphs: [
             "We may suspend or close an account for breach of these terms, suspected fraud, or legal requirement. You may close your account at any time once positions are closed and obligations are settled.",
           ],
         },
         {
-          heading: "7. Disclaimers and limitation of liability",
+          heading: "8. Disclaimers and limitation of liability",
           paragraphs: [
             "The platform is provided on an as-is basis. We are not liable for losses arising from market movements, delays in market data, or interruptions outside our reasonable control. Nothing here limits liability that cannot be limited by law.",
           ],
         },
         {
-          heading: "8. Changes to these terms",
+          heading: "9. Changes to these terms",
           paragraphs: [
             "We may amend these terms. Continued use of the platform after an update takes effect constitutes acceptance of the revised terms.",
           ],
