@@ -1,7 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/lib/auth";
-import welcomeHero from "@/assets/rh-phone.png";
+import welcomeHeroAsset from "@/assets/welcome-phone.png.asset.json";
+
+const welcomeHero = welcomeHeroAsset.url;
 
 export const Route = createFileRoute("/welcome")({
   component: Welcome,
