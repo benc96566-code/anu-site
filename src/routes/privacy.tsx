@@ -35,7 +35,8 @@ export const Route = createFileRoute("/privacy")({
         {
           heading: "2. How we use your information",
           paragraphs: [
-            "We use your information to open and maintain your account, execute and settle your trades, process deposits and withdrawals, and display accurate balances and positions.",
+            "We use your information to open and maintain your account, execute and settle your trades — including automated trades placed by the Auto Trader feature where you have enabled it — process deposits and withdrawals, and display accurate balances and positions.",
+            "If you take part in the referral program, we use your referral code to link referred accounts to yours and to credit referral bonuses to both parties.",
             "We also use it to detect and prevent fraud, secure your account, meet legal and regulatory reporting duties, provide customer support and improve our products.",
           ],
         },

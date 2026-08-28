@@ -35,6 +35,13 @@ export const Route = createFileRoute("/terms")({
           ],
         },
         {
+          heading: "3. Auto Trader",
+          paragraphs: [
+            "Robinhood offers an automated trading feature (Auto Trader) that executes trades on your behalf using algorithmic strategies. Historically, Auto Trader has generated profitable trades approximately 70% of the time.",
+            "Past performance — including the 70% profitability rate — is not a guarantee of future results. All investing involves risk, including the possible loss of principal, and you should only enable Auto Trader with funds you can afford to risk. You may enable or disable Auto Trader at any time.",
+          ],
+        },
+        {
           heading: "3. Deposits, withdrawals and balances",
           paragraphs: [
             "Deposits by card, bank or crypto are credited once confirmed and may be subject to review before funds become available for trading. Withdrawals are processed to verified destinations only.",
@@ -42,13 +49,21 @@ export const Route = createFileRoute("/terms")({
           ],
         },
         {
-          heading: "4. Fees",
+          heading: "4. Referral program",
+          paragraphs: [
+            "Every account receives a unique referral code. When a new user signs up with your code, both you and the new user receive a $100.00 referral bonus, credited to the bonus balance of each account.",
+            "Referral bonus funds are included in your displayed balance and can be used for trading, but they can only be withdrawn after a total of $1,000 or more in confirmed deposits has been made — either by you or by the person you referred. This condition is disclosed to you when you attempt to withdraw bonus funds.",
+            "Each account may claim one referral code. We may withhold or reverse bonuses obtained through self-referrals, fake accounts, or other abuse.",
+          ],
+        },
+        {
+          heading: "5. Fees",
           paragraphs: [
             "Commission-free trading applies to standard US-listed stock and ETF orders. Regulatory pass-through fees, crypto network fees and certain transfer or funding fees may still apply and are disclosed before you confirm.",
           ],
         },
         {
-          heading: "5. Acceptable use",
+          heading: "6. Acceptable use",
           paragraphs: ["You agree not to use the platform for unlawful purposes or in ways that harm the service or other customers."],
           bullets: [
             "No market manipulation, spoofing, layering or coordinated abusive trading.",
@@ -57,19 +72,19 @@ export const Route = createFileRoute("/terms")({
           ],
         },
         {
-          heading: "6. Suspension and termination",
+          heading: "7. Suspension and termination",
           paragraphs: [
             "We may suspend or close an account for breach of these terms, suspected fraud, or legal requirement. You may close your account at any time once positions are closed and obligations are settled.",
           ],
         },
         {
-          heading: "7. Disclaimers and limitation of liability",
+          heading: "8. Disclaimers and limitation of liability",
           paragraphs: [
             "The platform is provided on an as-is basis. We are not liable for losses arising from market movements, delays in market data, or interruptions outside our reasonable control. Nothing here limits liability that cannot be limited by law.",
           ],
         },
         {
-          heading: "8. Changes to these terms",
+          heading: "9. Changes to these terms",
           paragraphs: [
             "We may amend these terms. Continued use of the platform after an update takes effect constitutes acceptance of the revised terms.",
           ],
