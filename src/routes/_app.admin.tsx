@@ -69,6 +69,17 @@ function AdminPage() {
 
 
   if (isAdmin.isLoading) return <div className="p-10 text-center text-sm">Checking access…</div>;
+  if (isAdmin.isError) {
+    return (
+      <div className="mx-auto max-w-md px-5 pt-10 text-center">
+        <h1 className="text-lg font-bold">Could not verify admin access</h1>
+        <p className="mt-2 text-sm text-muted-foreground">Please sign in again and try opening the admin panel.</p>
+        <button onClick={() => isAdmin.refetch()} className="mt-5 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+          Try again
+        </button>
+      </div>
+    );
+  }
   if (!isAdmin.data) return null;
 
   return (

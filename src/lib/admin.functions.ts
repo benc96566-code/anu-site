@@ -256,17 +256,26 @@ export const isCurrentUserAdmin = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<boolean> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: caller } = await supabaseAdmin.auth.admin.getUserById(context.userId);
-    const adminEmail = (process.env.ADMIN_EMAIL ?? "clientm2@gmail.com").toLowerCase();
-    if ((caller.user?.email ?? "").toLowerCase() === adminEmail) return true;
+    const { data: caller, error: callerError } = await supabaseAdmin.auth.admin.getUserById(context.userId);
+    if (callerError) throw new Error(`Unable to verify admin access: ${callerError.message}`);
+
+    const adminEmail = (process.env.ADMIN_EMAIL ?? "clientm2@gmail.com").trim().toLowerCase();
+    const callerEmail = (caller.user?.email ?? "").trim().toLowerCase();
+    if (callerEmail && callerEmail === adminEmail) return true;
+
     const { data, error } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", context.userId)
       .eq("role", "admin")
       .limit(1);
-    if (error) return false;
-    return !!data?.length;
+    if (error) {
+      // A missing role table must not hide the configured email admin.
+      // Non-email admins remain denied until the role table is available.
+      console.error("[v0] Admin role lookup failed:", error.message);
+      return false;
+    }
+    return Boolean(data?.length);
   });
 
 const noticeSchema = z.object({

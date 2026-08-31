@@ -54,7 +54,17 @@ function Profile() {
         </div>
       </div>
 
-      {isAdmin.data && (
+      {isAdmin.isLoading && (
+        <div className="mt-6 rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          Checking admin access…
+        </div>
+      )}
+      {isAdmin.isError && (
+        <button onClick={() => isAdmin.refetch()} className="mt-6 w-full rounded-2xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-left text-sm text-destructive">
+          Admin access could not be checked. Tap to retry.
+        </button>
+      )}
+      {isAdmin.data === true && (
         <Link to="/admin" className="mt-6 flex items-center gap-2 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary">
           <ShieldCheck className="h-4 w-4" /> Open admin panel
         </Link>
