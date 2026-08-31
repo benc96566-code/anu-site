@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ArrowLeft, Eye, EyeOff, Fingerprint } from "lucide-react";
-import { ensureAdminUser } from "@/lib/admin.functions";
+import { ensureAdminUser, isCurrentUserAdmin } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/login")({
   component: Login,
@@ -13,6 +13,7 @@ export const Route = createFileRoute("/login")({
 function Login() {
   const nav = useNavigate();
   const ensureAdmin = useServerFn(ensureAdminUser);
+  const checkAdmin = useServerFn(isCurrentUserAdmin);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
@@ -52,7 +53,15 @@ function Login() {
       return toast.error(error.message);
     }
     toast.success("Welcome back");
-    nav({ to: "/dashboard", replace: true });
+    // Route administrators straight to their panel after the session is established.
+    // If the access check is unavailable, keep the normal dashboard fallback.
+    let admin = false;
+    try {
+      admin = await checkAdmin();
+    } catch {
+      admin = false;
+    }
+    nav({ to: admin ? "/admin" : "/dashboard", replace: true });
   };
 
   return (
