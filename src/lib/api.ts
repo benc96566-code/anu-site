@@ -229,6 +229,150 @@ export function useDeletePaymentMethod() {
   });
 }
 
+/* ---------------- Fund locks ---------------- */
+
+export type FundLock = {
+  id: string;
+  user_id: string;
+  amount: number;
+  term_months: number;
+  apy: number;
+  locked_at: string;
+  unlock_at: string;
+  status: "active" | "released" | string;
+  created_at: string;
+};
+
+export const LOCK_TERMS = [
+  { months: 3, label: "3 months", apy: 4 },
+  { months: 6, label: "6 months", apy: 6 },
+  { months: 12, label: "1 year", apy: 9 },
+] as const;
+
+export const MIN_LOCK_AMOUNT = 100;
+
+export function useFundLocks() {
+  const { user } = useAuth();
+  return useQuery({
+    enabled: !!user,
+    queryKey: ["fund_locks", user?.id],
+    queryFn: async (): Promise<FundLock[]> => {
+      const { data, error } = await supabase
+        .from("fund_locks")
+        .select("*")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []).map((r: any) => ({ ...r, amount: Number(r.amount), apy: Number(r.apy) }));
+    },
+  });
+}
+
+export function useCreateLock() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ amount, termMonths }: { amount: number; termMonths: number }) => {
+      if (!user) throw new Error("Not signed in");
+      const term = LOCK_TERMS.find((t) => t.months === termMonths);
+      if (!term) throw new Error("Invalid lock term");
+      if (amount < MIN_LOCK_AMOUNT) throw new Error(`Minimum lock is $${MIN_LOCK_AMOUNT}`);
+
+      // Check available balance
+      const { data: acct, error: ae } = await supabase.from("accounts").select("balance").eq("user_id", user.id).maybeSingle();
+      if (ae) throw ae;
+      const balance = Number((acct as any)?.balance ?? 0);
+      if (amount > balance) throw new Error("Insufficient available balance to lock");
+
+      const unlock = new Date();
+      unlock.setMonth(unlock.getMonth() + termMonths);
+
+      const { error: le } = await supabase.from("fund_locks").insert({
+        user_id: user.id,
+        amount,
+        term_months: termMonths,
+        apy: term.apy,
+        unlock_at: unlock.toISOString(),
+        status: "active",
+      } as any);
+      if (le) throw le;
+
+      // Move funds out of available balance
+      const { error: ue } = await supabase.from("accounts").update({ balance: balance - amount }).eq("user_id", user.id);
+      if (ue) throw ue;
+
+      await supabase.from("transactions").insert({
+        user_id: user.id,
+        kind: "lock",
+        label: `Locked funds · ${term.label}`,
+        sub: `Unlocks ${unlock.toLocaleDateString()} · ${term.apy}% APY`,
+        amount: -amount,
+        status: "completed",
+      } as any);
+
+      await supabase.from("notifications").insert({
+        user_id: user.id,
+        title: "Funds locked",
+        body: `$${amount.toFixed(2)} locked for ${term.label} at ${term.apy}% APY`,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fund_locks"] });
+      qc.invalidateQueries({ queryKey: ["account"] });
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
+/** Releases a matured lock back to the available balance. */
+export function useReleaseLock() {
+  const { user } = useAuth();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (lock: FundLock) => {
+      if (!user) throw new Error("Not signed in");
+      if (new Date(lock.unlock_at).getTime() > Date.now()) throw new Error("This lock has not matured yet");
+      if (lock.status !== "active") throw new Error("Lock already released");
+
+      const { error: re } = await supabase.from("fund_locks").update({ status: "released" }).eq("id", lock.id).eq("user_id", user.id);
+      if (re) throw re;
+
+      const { data: acct, error: ae } = await supabase.from("accounts").select("balance").eq("user_id", user.id).maybeSingle();
+      if (ae) throw ae;
+      const balance = Number((acct as any)?.balance ?? 0);
+
+      // Return principal + accrued interest for the full term
+      const interest = +(lock.amount * (lock.apy / 100) * (lock.term_months / 12)).toFixed(2);
+      const payout = lock.amount + interest;
+
+      const { error: ue } = await supabase.from("accounts").update({ balance: balance + payout }).eq("user_id", user.id);
+      if (ue) throw ue;
+
+      await supabase.from("transactions").insert({
+        user_id: user.id,
+        kind: "lock",
+        label: "Lock matured",
+        sub: `Principal $${lock.amount.toFixed(2)} + interest $${interest.toFixed(2)}`,
+        amount: payout,
+        status: "completed",
+      } as any);
+
+      await supabase.from("notifications").insert({
+        user_id: user.id,
+        title: "Lock released",
+        body: `$${payout.toFixed(2)} returned to your available balance`,
+      });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["fund_locks"] });
+      qc.invalidateQueries({ queryKey: ["account"] });
+      qc.invalidateQueries({ queryKey: ["transactions"] });
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}
+
 /* ---------------- Referral program ---------------- */
 
 export const REFERRAL_BONUS = 100;
