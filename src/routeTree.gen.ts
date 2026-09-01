@@ -33,6 +33,7 @@ import { Route as AppOrdersRouteImport } from './routes/_app.orders'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
 import { Route as AppNewsRouteImport } from './routes/_app.news'
 import { Route as AppMarketsRouteImport } from './routes/_app.markets'
+import { Route as AppLockRouteImport } from './routes/_app.lock'
 import { Route as AppHistoryRouteImport } from './routes/_app.history'
 import { Route as AppDocumentsRouteImport } from './routes/_app.documents'
 import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
@@ -165,6 +166,11 @@ const AppMarketsRoute = AppMarketsRouteImport.update({
   path: '/markets',
   getParentRoute: () => AppRoute,
 } as any)
+const AppLockRoute = AppLockRouteImport.update({
+  id: '/lock',
+  path: '/lock',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppHistoryRoute = AppHistoryRouteImport.update({
   id: '/history',
   path: '/history',
@@ -243,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AppDashboardRoute
   '/documents': typeof AppDocumentsRoute
   '/history': typeof AppHistoryRoute
+  '/lock': typeof AppLockRoute
   '/markets': typeof AppMarketsRoute
   '/news': typeof AppNewsRoute
   '/notifications': typeof AppNotificationsRoute
@@ -280,6 +287,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AppDashboardRoute
   '/documents': typeof AppDocumentsRoute
   '/history': typeof AppHistoryRoute
+  '/lock': typeof AppLockRoute
   '/markets': typeof AppMarketsRoute
   '/news': typeof AppNewsRoute
   '/notifications': typeof AppNotificationsRoute
@@ -319,6 +327,7 @@ export interface FileRoutesById {
   '/_app/dashboard': typeof AppDashboardRoute
   '/_app/documents': typeof AppDocumentsRoute
   '/_app/history': typeof AppHistoryRoute
+  '/_app/lock': typeof AppLockRoute
   '/_app/markets': typeof AppMarketsRoute
   '/_app/news': typeof AppNewsRoute
   '/_app/notifications': typeof AppNotificationsRoute
@@ -358,6 +367,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/documents'
     | '/history'
+    | '/lock'
     | '/markets'
     | '/news'
     | '/notifications'
@@ -395,6 +405,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/documents'
     | '/history'
+    | '/lock'
     | '/markets'
     | '/news'
     | '/notifications'
@@ -433,6 +444,7 @@ export interface FileRouteTypes {
     | '/_app/dashboard'
     | '/_app/documents'
     | '/_app/history'
+    | '/_app/lock'
     | '/_app/markets'
     | '/_app/news'
     | '/_app/notifications'
@@ -639,6 +651,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMarketsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/lock': {
+      id: '/_app/lock'
+      path: '/lock'
+      fullPath: '/lock'
+      preLoaderRoute: typeof AppLockRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/history': {
       id: '/_app/history'
       path: '/history'
@@ -733,6 +752,7 @@ interface AppRouteChildren {
   AppDashboardRoute: typeof AppDashboardRoute
   AppDocumentsRoute: typeof AppDocumentsRoute
   AppHistoryRoute: typeof AppHistoryRoute
+  AppLockRoute: typeof AppLockRoute
   AppMarketsRoute: typeof AppMarketsRoute
   AppNewsRoute: typeof AppNewsRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
@@ -760,6 +780,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppDashboardRoute: AppDashboardRoute,
   AppDocumentsRoute: AppDocumentsRoute,
   AppHistoryRoute: AppHistoryRoute,
+  AppLockRoute: AppLockRoute,
   AppMarketsRoute: AppMarketsRoute,
   AppNewsRoute: AppNewsRoute,
   AppNotificationsRoute: AppNotificationsRoute,
