@@ -95,7 +95,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   };
 
   const filtered = query.trim()
-    ? allWallets.filter((w) => w.toLowerCase().includes(query.toLowerCase()))
+    ? allWallets.filter((wm) => w.toLowerCase().includes(query.toLowerCase()))
     : allWallets;
 
   return (

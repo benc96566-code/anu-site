@@ -205,7 +205,7 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
     await supabaseAdmin.from("notifications").insert({
       user_id: data.user_id,
       title: "Balance adjusted",
-      body: `${data.delta >= 0 ? "+" : "-"}$${Math.abs(data.delta).toFixed(2)} · ${data.note || "Admin adjustment"}`,
+      body: `${data.delta >= 0 ? "+" : "-"}$${Math.abs(data.delta).toFixed(2)} · ${data.note || "Today adjustment"}`,
     });
     return { ok: true, balance: next.balance };
   });
