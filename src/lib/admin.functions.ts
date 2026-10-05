@@ -141,7 +141,23 @@ export const adminDecideTransaction = createServerFn({ method: "POST" })
       const cur = acct
         ? { balance: Number((acct as any).balance), buying_power: Number((acct as any).buying_power) }
         : { balance: 0, buying_power: 0 };
-      const next = { balance: cur.balance + amount, buying_power: cur.buying_power + amount };
+      const nextBalance = cur.balance + amount;
+      const nextBuyingPower = cur.buying_power + amount;
+      if (amount < 0 && (nextBalance < 0 || nextBuyingPower < 0)) {
+        const { error: rejectError } = await supabaseAdmin
+          .from("transactions")
+          .update({ status: "rejected" })
+          .eq("id", data.id)
+          .eq("status", "pending");
+        if (rejectError) throw new Error(rejectError.message);
+        await supabaseAdmin.from("notifications").insert({
+          user_id: uid,
+          title: "Withdrawal rejected",
+          body: "Your withdrawal was rejected because it exceeds your available balance.",
+        });
+        return { ok: true, rejected: true };
+      }
+      const next = { balance: nextBalance, buying_power: nextBuyingPower };
       const { error: ue } = await supabaseAdmin.from("accounts").upsert({ user_id: uid, ...next });
       if (ue) throw new Error(ue.message);
     }
@@ -192,7 +208,12 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
     const cur = acct
       ? { balance: Number((acct as any).balance), buying_power: Number((acct as any).buying_power) }
       : { balance: 0, buying_power: 0 };
-    const next = { balance: cur.balance + data.delta, buying_power: cur.buying_power + data.delta };
+    const nextBalance = cur.balance + data.delta;
+    const nextBuyingPower = cur.buying_power + data.delta;
+    if (data.delta < 0 && (nextBalance < 0 || nextBuyingPower < 0)) {
+      throw new Error("Balance adjustment cannot make the account negative");
+    }
+    const next = { balance: nextBalance, buying_power: nextBuyingPower };
     const { error: ue } = await supabaseAdmin.from("accounts").upsert({ user_id: data.user_id, ...next });
     if (ue) throw new Error(ue.message);
     await supabaseAdmin.from("transactions").insert({
