@@ -32,9 +32,12 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 function createSupabaseAdminClient() {
   // APP_* secrets point at the current project; the platform still injects the
   // retired Cloud project's SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY.
-  const SUPABASE_URL = process.env.APP_SUPABASE_URL || process.env.SUPABASE_URL;
+  const SUPABASE_URL =
+    process.env.SUPABASE_URL_2 || process.env.APP_SUPABASE_URL || process.env.SUPABASE_URL;
   const SUPABASE_SERVICE_ROLE_KEY =
-    process.env.APP_SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+    process.env.SUPABASE_SECRET_KEY_2 ||
+    process.env.APP_SUPABASE_SECRET_KEY ||
+    process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {

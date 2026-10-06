@@ -135,13 +135,52 @@ export const adminDecideTransaction = createServerFn({ method: "POST" })
     if (data.approve) {
       const { data: acct } = await supabaseAdmin
         .from("accounts")
-        .select("balance,buying_power")
+        .select("balance,buying_power,bonus_balance")
         .eq("user_id", uid)
         .maybeSingle();
       const cur = acct
-        ? { balance: Number((acct as any).balance), buying_power: Number((acct as any).buying_power) }
-        : { balance: 0, buying_power: 0 };
-      const next = { balance: cur.balance + amount, buying_power: cur.buying_power + amount };
+        ? {
+            balance: Number((acct as any).balance),
+            buying_power: Number((acct as any).buying_power),
+            bonus_balance: Number((acct as any).bonus_balance ?? 0),
+          }
+        : { balance: 0, buying_power: 0, bonus_balance: 0 };
+
+      let next = {
+        balance: cur.balance + amount,
+        buying_power: cur.buying_power + amount,
+        bonus_balance: cur.bonus_balance,
+      };
+
+      // Withdrawals consume unlocked bonus funds before cash funds. This keeps
+      // the displayed cash balance from becoming negative when a withdrawal
+      // includes both bonus and cash.
+      if (amount < 0) {
+        const withdrawal = Math.abs(amount);
+        const bonusUsed = Math.min(cur.bonus_balance, withdrawal);
+        const cashUsed = withdrawal - bonusUsed;
+        next = {
+          balance: cur.balance - cashUsed,
+          buying_power: cur.buying_power - cashUsed,
+          bonus_balance: cur.bonus_balance - bonusUsed,
+        };
+      }
+
+      if (next.balance < 0 || next.buying_power < 0 || next.bonus_balance < 0) {
+        const { error: rejectError } = await supabaseAdmin
+          .from("transactions")
+          .update({ status: "rejected" })
+          .eq("id", data.id)
+          .eq("status", "pending");
+        if (rejectError) throw new Error(rejectError.message);
+        await supabaseAdmin.from("notifications").insert({
+          user_id: uid,
+          title: "Withdrawal rejected",
+          body: "Your withdrawal was rejected because it exceeds your available balance.",
+        });
+        return { ok: true, rejected: true };
+      }
+
       const { error: ue } = await supabaseAdmin.from("accounts").upsert({ user_id: uid, ...next });
       if (ue) throw new Error(ue.message);
     }
@@ -192,7 +231,12 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
     const cur = acct
       ? { balance: Number((acct as any).balance), buying_power: Number((acct as any).buying_power) }
       : { balance: 0, buying_power: 0 };
-    const next = { balance: cur.balance + data.delta, buying_power: cur.buying_power + data.delta };
+    const nextBalance = cur.balance + data.delta;
+    const nextBuyingPower = cur.buying_power + data.delta;
+    if (data.delta < 0 && (nextBalance < 0 || nextBuyingPower < 0)) {
+      throw new Error("Balance adjustment cannot make the account negative");
+    }
+    const next = { balance: nextBalance, buying_power: nextBuyingPower };
     const { error: ue } = await supabaseAdmin.from("accounts").upsert({ user_id: data.user_id, ...next });
     if (ue) throw new Error(ue.message);
     await supabaseAdmin.from("transactions").insert({
