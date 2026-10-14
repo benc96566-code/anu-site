@@ -3,11 +3,16 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { brokeredPreviewStorage } from './previewAuthStorage';
 
-const SUPABASE_URL =
+const rawSupabaseUrl =
   import.meta.env.SUPABASE_URL_2 ??
   import.meta.env.NEXT_PUBLIC_SUPABASE_URL ??
   import.meta.env.SUPABASE_URL ??
   import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_URL = rawSupabaseUrl
+  ? rawSupabaseUrl.startsWith('http://') || rawSupabaseUrl.startsWith('https://')
+    ? rawSupabaseUrl
+    : `https://${rawSupabaseUrl}`
+  : undefined;
 const SUPABASE_PUBLISHABLE_KEY =
   import.meta.env.SUPABASE_PUBLISHABLE_KEY_2 ??
   import.meta.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ??

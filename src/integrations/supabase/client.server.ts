@@ -50,7 +50,11 @@ function createSupabaseAdminClient() {
     throw new Error(message);
   }
 
-  return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+  const normalizedSupabaseUrl = SUPABASE_URL.startsWith('http://') || SUPABASE_URL.startsWith('https://')
+    ? SUPABASE_URL
+    : `https://${SUPABASE_URL}`;
+
+  return createClient<Database>(normalizedSupabaseUrl, SUPABASE_SERVICE_ROLE_KEY, {
     global: {
       fetch: createSupabaseFetch(SUPABASE_SERVICE_ROLE_KEY),
     },
