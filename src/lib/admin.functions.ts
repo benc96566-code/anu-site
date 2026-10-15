@@ -27,7 +27,14 @@ export const adminListUsers = createServerFn({ method: "POST" })
     if (callerError) throw new Error(callerError.message);
     const callerEmail = caller.user?.email?.toLowerCase() ?? "";
     const adminEmail = (process.env.ADMIN_EMAIL ?? "clientm2@gmail.com").toLowerCase();
-    if (callerEmail !== adminEmail && !(callerRoles ?? []).length) throw new Error("Forbidden");
+    const isConfiguredAdmin = callerEmail === adminEmail;
+    if (!isConfiguredAdmin && !(callerRoles ?? []).length) throw new Error("Forbidden");
+    if (isConfiguredAdmin && !(callerRoles ?? []).length) {
+      const { error: roleUpsertError } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: context.userId, role: "admin" }, { onConflict: "user_id,role" });
+      if (roleUpsertError) throw new Error(roleUpsertError.message);
+    }
 
     const { data: accounts, error } = await supabaseAdmin
       .from("accounts")
@@ -82,7 +89,14 @@ export const adminListPending = createServerFn({ method: "POST" })
     if (callerError) throw new Error(callerError.message);
     const callerEmail = caller.user?.email?.toLowerCase() ?? "";
     const adminEmail = (process.env.ADMIN_EMAIL ?? "clientm2@gmail.com").toLowerCase();
-    if (callerEmail !== adminEmail && !(callerRoles ?? []).length) throw new Error("Forbidden");
+    const isConfiguredAdmin = callerEmail === adminEmail;
+    if (!isConfiguredAdmin && !(callerRoles ?? []).length) throw new Error("Forbidden");
+    if (isConfiguredAdmin && !(callerRoles ?? []).length) {
+      const { error: roleUpsertError } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: context.userId, role: "admin" }, { onConflict: "user_id,role" });
+      if (roleUpsertError) throw new Error(roleUpsertError.message);
+    }
 
     const { data, error } = await supabaseAdmin
       .from("transactions")
@@ -120,7 +134,14 @@ export const adminDecideTransaction = createServerFn({ method: "POST" })
     if (callerError) throw new Error(callerError.message);
     const callerEmail = caller.user?.email?.toLowerCase() ?? "";
     const adminEmail = (process.env.ADMIN_EMAIL ?? "clientm2@gmail.com").toLowerCase();
-    if (callerEmail !== adminEmail && !(callerRoles ?? []).length) throw new Error("Forbidden");
+    const isConfiguredAdmin = callerEmail === adminEmail;
+    if (!isConfiguredAdmin && !(callerRoles ?? []).length) throw new Error("Forbidden");
+    if (isConfiguredAdmin && !(callerRoles ?? []).length) {
+      const { error: roleUpsertError } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: context.userId, role: "admin" }, { onConflict: "user_id,role" });
+      if (roleUpsertError) throw new Error(roleUpsertError.message);
+    }
 
     const { data: tx, error: te } = await supabaseAdmin
       .from("transactions")
@@ -140,9 +161,9 @@ export const adminDecideTransaction = createServerFn({ method: "POST" })
         .maybeSingle();
       const cur = acct
         ? {
-            balance: Number((acct as any).balance),
-            buying_power: Number((acct as any).buying_power),
-            bonus_balance: Number((acct as any).bonus_balance ?? 0),
+            balance: Math.max(0, Number((acct as any).balance) || 0),
+            buying_power: Math.max(0, Number((acct as any).buying_power) || 0),
+            bonus_balance: Math.max(0, Number((acct as any).bonus_balance) || 0),
           }
         : { balance: 0, buying_power: 0, bonus_balance: 0 };
 
@@ -152,17 +173,32 @@ export const adminDecideTransaction = createServerFn({ method: "POST" })
         bonus_balance: cur.bonus_balance,
       };
 
-      // Withdrawals consume unlocked bonus funds before cash funds. This keeps
-      // the displayed cash balance from becoming negative when a withdrawal
-      // includes both bonus and cash.
       if (amount < 0) {
         const withdrawal = Math.abs(amount);
+        const available = cur.balance + cur.bonus_balance;
+        if (withdrawal > available) {
+          const { error: rejectError } = await supabaseAdmin
+            .from("transactions")
+            .update({ status: "rejected" })
+            .eq("id", data.id)
+            .eq("status", "pending");
+          if (rejectError) throw new Error(rejectError.message);
+          await supabaseAdmin.from("notifications").insert({
+            user_id: uid,
+            title: "Withdrawal rejected",
+            body: "Your withdrawal was rejected because it exceeds your available balance.",
+          });
+          return { ok: true, rejected: true };
+        }
+
+        // Spend unlocked bonus first, then cash. Clamp every stored balance so
+        // a withdrawal that exactly consumes cash plus bonus ends at zero.
         const bonusUsed = Math.min(cur.bonus_balance, withdrawal);
         const cashUsed = withdrawal - bonusUsed;
         next = {
-          balance: cur.balance - cashUsed,
-          buying_power: cur.buying_power - cashUsed,
-          bonus_balance: cur.bonus_balance - bonusUsed,
+          balance: Math.max(0, cur.balance - cashUsed),
+          buying_power: Math.max(0, cur.buying_power - cashUsed),
+          bonus_balance: Math.max(0, cur.bonus_balance - bonusUsed),
         };
       }
 
@@ -221,7 +257,14 @@ export const adminAdjustBalance = createServerFn({ method: "POST" })
     if (callerError) throw new Error(callerError.message);
     const callerEmail = caller.user?.email?.toLowerCase() ?? "";
     const adminEmail = (process.env.ADMIN_EMAIL ?? "clientm2@gmail.com").toLowerCase();
-    if (callerEmail !== adminEmail && !(callerRoles ?? []).length) throw new Error("Forbidden");
+    const isConfiguredAdmin = callerEmail === adminEmail;
+    if (!isConfiguredAdmin && !(callerRoles ?? []).length) throw new Error("Forbidden");
+    if (isConfiguredAdmin && !(callerRoles ?? []).length) {
+      const { error: roleUpsertError } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: context.userId, role: "admin" }, { onConflict: "user_id,role" });
+      if (roleUpsertError) throw new Error(roleUpsertError.message);
+    }
 
     const { data: acct } = await supabaseAdmin
       .from("accounts")
@@ -336,7 +379,14 @@ export const adminSendNotice = createServerFn({ method: "POST" })
     if (callerError) throw new Error(callerError.message);
     const callerEmail = caller.user?.email?.toLowerCase() ?? "";
     const adminEmail = (process.env.ADMIN_EMAIL ?? "clientm2@gmail.com").toLowerCase();
-    if (callerEmail !== adminEmail && !(callerRoles ?? []).length) throw new Error("Forbidden");
+    const isConfiguredAdmin = callerEmail === adminEmail;
+    if (!isConfiguredAdmin && !(callerRoles ?? []).length) throw new Error("Forbidden");
+    if (isConfiguredAdmin && !(callerRoles ?? []).length) {
+      const { error: roleUpsertError } = await supabaseAdmin
+        .from("user_roles")
+        .upsert({ user_id: context.userId, role: "admin" }, { onConflict: "user_id,role" });
+      if (roleUpsertError) throw new Error(roleUpsertError.message);
+    }
 
     const rows = data.user_ids.map((id) => ({
       user_id: id,
